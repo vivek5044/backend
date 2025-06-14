@@ -8,6 +8,7 @@
     import org.springframework.web.bind.annotation.*;
 
     import java.util.List;
+    import java.util.Optional;
 
     @RestController
     @RequestMapping("/users")
@@ -25,24 +26,42 @@
             return ResponseEntity.ok("Users loaded into H2 DB");
         }
 
+        //free search
         @GetMapping("/search")
-        public ResponseEntity<List<User>> searchUsers(@RequestParam("query") String query) {
-            return ResponseEntity.ok(userRepository.searchByText(query));
+        public ResponseEntity<?> searchUsers(@RequestParam("query") String query) {
+            List<User> users = userRepository.searchByText(query);
+
+            if (users.isEmpty()) {
+                return ResponseEntity
+                        .status(404)
+                        .body("No users found matching the query: " + query);
+            }
+
+            return ResponseEntity.ok(users);
         }
 
-        // b. Find by ID
+
+        //Find by ID
         @GetMapping("/{id}")
-        public ResponseEntity<User> getUserById(@PathVariable Long id) {
-            return userRepository.findById(id)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
+        public ResponseEntity<?> getUserById(@PathVariable Long id) {
+            Optional<User> user = userRepository.findById(id);
+            if(user.isEmpty()){
+              return ResponseEntity
+                      .status(404)
+                      .body("No users found matching the id: "+ id);
+            };
+            return ResponseEntity.ok(user);
         }
 
-        // b. Find by Email
+        //Find by Email
         @GetMapping("/email")
-        public ResponseEntity<User> getUserByEmail(@RequestParam("value") String email) {
-            return userRepository.findByEmail(email)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
+        public ResponseEntity<?> getUserByEmail(@RequestParam("value") String email) {
+            Optional<User> user = userRepository.findByEmail(email);
+            if(user.isEmpty()){
+                return ResponseEntity
+                        .status(404)
+                        .body("No users found matching the email: "+ email);
+            };
+            return ResponseEntity.ok(user);
         }
     }
